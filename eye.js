@@ -2,6 +2,48 @@
   const section = document.querySelector('#eye');
   const canvas = document.querySelector('#ascii-eye');
   const contactButton = document.querySelector('#eye-contact');
+  const dropOutline = document.querySelector('#drop-outline');
+
+  if (dropOutline) {
+    const columns = 39;
+    const rows = 30;
+    const center = (columns - 1) / 2;
+    const widest = 18;
+    const slash = String.fromCharCode(92);
+    const art = [];
+
+    for (let y = 0; y < rows; y += 1) {
+      const t = y / (rows - 1);
+      let halfWidth;
+      if (t <= 0.62) {
+        halfWidth = widest * Math.pow(Math.sin((t / 0.62) * Math.PI / 2), 0.82);
+      } else {
+        const lower = (t - 0.62) / 0.38;
+        halfWidth = 4 + (widest - 4) * Math.sqrt(Math.max(0, 1 - lower * lower));
+      }
+
+      const left = Math.max(0, Math.round(center - halfWidth));
+      const right = Math.min(columns - 1, Math.round(center + halfWidth));
+      const line = new Array(columns).fill(' ');
+
+      if (y === 0) {
+        line[Math.round(center)] = '.';
+      } else if (y === rows - 1) {
+        for (let x = left + 1; x < right; x += 1) line[x] = '-';
+        line[left] = '`';
+        line[right] = "'";
+      } else {
+        const opening = t < 0.62;
+        line[left] = opening ? '/' : slash;
+        line[right] = opening ? slash : '/';
+        if (t < 0.30 && y % 3 === 0) line[left + 3] = '.';
+      }
+      art.push(line.join('').replace(/\s+$/, ''));
+    }
+
+    dropOutline.textContent = art.join('\n');
+  }
+
   if (!section || !canvas || !contactButton || !canvas.getContext) return;
 
   const ctx = canvas.getContext('2d');
@@ -108,7 +150,7 @@
     open = Math.max(0.025, open);
 
     const pupilX = cx + gaze.x * rx * 0.39;
-    const pupilY = cy + gaze.y * ry * 0.52;
+    const pupilY = cy + gaze.y * ry * 0.65;
     const irisRX = rx * 0.215;
     const irisRY = ry * 0.57;
     const pupilRX = rx * 0.105;

@@ -69,6 +69,9 @@ export interface Shark {
   orbitRadius: number;
   target: Fish | null;
   retargetAt: number;
+  panicX: number;
+  panicY: number;
+  panicUntil: number;
   /** 0 far / dim → 1 near / bright. */
   depth: number;
 }
@@ -210,6 +213,9 @@ export class World {
         orbitRadius,
         target: null,
         retargetAt: 0,
+        panicX: 0,
+        panicY: 0,
+        panicUntil: 0,
         depth: clamp(size, 0, 1),
       });
     }
@@ -261,6 +267,39 @@ export class World {
       f.vx += (dx / d) * k;
       f.vy += (dy / d) * k;
       f.alarm = 1;
+    }
+
+    // A nearby splash startles a shark anywhere along its body. The shove is
+    // stored as a short-lived steering impulse so the whole animal turns away.
+    for (const sh of this.sharks) {
+      let nearestX = sh.nodes[0];
+      let nearestY = sh.nodes[1];
+      let nearest = Infinity;
+      for (let k = 0; k < SHARK_NODES; k++) {
+        const sx = sh.nodes[k * 2];
+        const sy = sh.nodes[k * 2 + 1];
+        const d = Math.hypot(sx - x, sy - y);
+        if (d < nearest) {
+          nearest = d;
+          nearestX = sx;
+          nearestY = sy;
+        }
+      }
+      if (nearest >= r) continue;
+      let dx = nearestX - x;
+      let dy = nearestY - y;
+      let d = Math.hypot(dx, dy);
+      if (d < 1e-3) {
+        const side = Math.random() < 0.5 ? -1 : 1;
+        dx = -Math.sin(sh.heading) * side;
+        dy = Math.cos(sh.heading) * side;
+        d = 1;
+      }
+      sh.panicX = dx / d;
+      sh.panicY = dy / d;
+      sh.panicUntil = Math.max(sh.panicUntil, this.time + 2.4);
+      sh.target = null;
+      sh.retargetAt = sh.panicUntil;
     }
   }
 
@@ -506,6 +545,8 @@ export class World {
       const nodes = sh.nodes;
       const hx = nodes[0];
       const hy = nodes[1];
+      const panicking = time < sh.panicUntil;
+      const panicLeft = panicking ? (sh.panicUntil - time) / 2.4 : 0;
 
       sh.hunger = Math.min(1, sh.hunger + dt * 0.03);
 
@@ -520,13 +561,17 @@ export class World {
 
       // Hunt.
       if (time >= sh.retargetAt) {
-        sh.target = this.findPrey(sh);
-        sh.retargetAt = time + 0.45;
+        sh.target = panicking ? null : this.findPrey(sh);
+        sh.retargetAt = panicking ? sh.panicUntil : time + 0.45;
       }
       const t = sh.target;
       let hunting = false;
       let closing = 0;
-      if (t && t.alive && sh.hunger > 0.3) {
+      if (panicking) {
+        const bolt = 4 + 5 * Math.sqrt(panicLeft);
+        dx += sh.panicX * bolt;
+        dy += sh.panicY * bolt;
+      } else if (t && t.alive && sh.hunger > 0.3) {
         // Pursuit: aim at where the fish is about to be.
         const tx = t.x + t.vx * 0.35 - hx;
         const ty = t.y + t.vy * 0.35 - hy;
@@ -623,15 +668,15 @@ export class World {
 
       const desired = Math.atan2(dy, dx);
       // Sharks can't pivot on the spot: the turning circle grows with speed.
-      const agility = Math.min(hunting ? 1.7 + closing : 0.8, sh.speed / (L * 0.22));
+      const agility = panicking ? 3.8 : Math.min(hunting ? 1.7 + closing : 0.8, sh.speed / (L * 0.22));
       const maxTurn = agility * dt;
       const turned = clamp(angleDiff(sh.heading, desired), -maxTurn, maxTurn);
       sh.heading += turned;
       sh.turn += (turned / dt - sh.turn) * Math.min(1, dt * 3);
 
       const cruise = 30 + L * 0.04;
-      const targetSpeed = hunting ? cruise * (1.45 + closing * 1.5) : cruise;
-      sh.speed += (targetSpeed - sh.speed) * Math.min(1, dt * 1.1);
+      const targetSpeed = panicking ? cruise * 2.15 : hunting ? cruise * (1.45 + closing * 1.5) : cruise;
+      sh.speed += (targetSpeed - sh.speed) * Math.min(1, dt * (panicking ? 3.2 : 1.1));
       sh.phase += dt * (2 + sh.speed / 24);
 
       nodes[0] += Math.cos(sh.heading) * sh.speed * dt;

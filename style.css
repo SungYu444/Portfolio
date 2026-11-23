@@ -78,8 +78,7 @@ h1 em, .section-heading h2 em, .site-footer h2 em { color: var(--accent-2); font
 .role h3 span { color: #77766d; font: 9px var(--mono); }
 .role p { max-width: 790px; margin: 0; color: #4b4c47; font: 10px/1.55 var(--type); }
 .role-index { justify-self: end; }
-.eye-section { position: relative; display: flex; min-height: 530px; padding: 240px 5.5% 20px; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; background: rgba(5,5,5,.84); backdrop-filter: blur(2px); text-align: center; }
-.eye-section::before { position: absolute; z-index: 0; inset: 0 auto 0 50%; width: 100vw; transform: translateX(-50%); background: rgba(5,5,5,.84); content: ''; }
+.eye-section { position: relative; display: flex; min-height: 530px; margin: 40px 5.5%; padding: 240px 5.5% 20px; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(217,203,180,.24); border-radius: 18px; background: rgba(5,5,5,.88); box-shadow: 0 18px 55px rgba(0,0,0,.22); backdrop-filter: blur(2px); text-align: center; }
 .eye-contact { position: absolute; z-index: 2; top: 8px; left: 50%; display: block; width: max-content; transform: translateX(-50%) scale(.8); transform-origin: top center; color: #d6d0c5; filter: drop-shadow(0 2px 4px rgba(255,255,255,.08)); transition: filter .2s; }
 .drop-outline { margin: 0; color: inherit; font: clamp(7px,.68vw,8px)/1.12 var(--mono); text-align: left; white-space: pre; }
 .drop-label, .drop-email { position: absolute; left: 50%; display: block; width: max-content; transform: translateX(-50%); text-align: center; }
@@ -133,12 +132,12 @@ h1 em, .section-heading h2 em, .site-footer h2 em { color: var(--accent-2); font
   .footer-bottom { gap: 10px; font-size: 6px; flex-wrap: wrap; }
 }
 @media(max-width:800px) {
-  .eye-section { min-height: 440px; padding: 205px 5% 18px; }
+  .eye-section { min-height: 440px; margin: 30px 4%; padding: 205px 5% 18px; border-radius: 16px; }
   .eye-contact { top: 7px; transform: translateX(-50%) scale(.76); }
   .drop-outline { font-size: 7px; }
 }
 @media(max-width:560px) {
-  .eye-section { min-height: 400px; padding: 185px 5% 18px; }
+  .eye-section { min-height: 400px; margin: 24px 5%; padding: 185px 5% 18px; border-radius: 14px; }
   .drop-outline { font-size: 6px; }
 }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior: auto; } }
